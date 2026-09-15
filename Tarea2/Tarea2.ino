@@ -1,3 +1,4 @@
+#include "BBTimer.hpp"
 BBTimer time0(BB_TIMER0);
 
 volatile bool leer = false;
@@ -16,7 +17,7 @@ void setup() {
 
 void loop() {
   if (leer == true) {
-    valor = analogRead(4);
+    valor = analogRead(0);
     Serial.println(valor);
 
     leer = false;
