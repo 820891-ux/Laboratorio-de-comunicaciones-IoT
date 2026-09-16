@@ -30,7 +30,7 @@ void loop() {
       Serial.println(analogRead(0));
     }
 
-    else if (comando.startsWith("ADC(")) {
+    else if (comando.startsWith("ADC(20)")) {
       int tiempo = comando.substring(4, comando.length() - 1).toInt();
       if (tiempo == 0) {
 
