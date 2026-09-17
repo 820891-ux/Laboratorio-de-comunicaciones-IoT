@@ -30,14 +30,14 @@ void loop() {
       Serial.println(analogRead(0));
     }
 
-    else if (comando.startsWith("ADC(20)")) {
+    else if (comando.startsWith("ADC(")) {
       int tiempo = comando.substring(4, comando.length() - 1).toInt();
       if (tiempo == 0) {
-
+        leer = false;
         time0.timerStop();
 
       } else {
-
+        leer = false;
         time0.setupTimer(tiempo * 1000000, leerADC);
         time0.timerStart();
       }
