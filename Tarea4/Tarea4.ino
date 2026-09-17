@@ -2,7 +2,7 @@ String comando;
 
 #include "BBTimer.hpp"
 BBTimer time0(BB_TIMER0);
-volatile bool leer = false;
+bool leer = false;
 int valor;
 
 #include "mbed.h"
