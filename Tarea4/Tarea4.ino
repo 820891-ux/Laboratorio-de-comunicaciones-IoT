@@ -2,7 +2,7 @@ String comando;
 
 #include "BBTimer.hpp"
 BBTimer time0(BB_TIMER0);
-volatile bool leer = false;
+bool leer = false;
 int valor;
 
 #include "mbed.h"
@@ -30,14 +30,14 @@ void loop() {
       Serial.println(analogRead(0));
     }
 
-    else if (comando.startsWith("ADC(20)")) {
+    else if (comando.startsWith("ADC(")) {
       int tiempo = comando.substring(4, comando.length() - 1).toInt();
       if (tiempo == 0) {
-
+        leer = false;
         time0.timerStop();
 
       } else {
-
+        leer = false;
         time0.setupTimer(tiempo * 1000000, leerADC);
         time0.timerStart();
       }
