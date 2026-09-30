@@ -1,4 +1,4 @@
-```cpp
+
 #include <Wire.h>
 
 // Dirección I2C utilizada por el esclavo
@@ -145,4 +145,4 @@ void recibirDatos(int numeroBytes) {
     datosRecibidos = true;
   }
 }
-```
+

@@ -1,4 +1,4 @@
-```cpp
+
 #include <Wire.h>
 #include <Arduino_LSM9DS1.h>
 
@@ -111,4 +111,4 @@ void enviarDatos(byte muestra, byte sensor, float x, float y, float z) {
   // Finalizamos la transmisión
   Wire.endTransmission();
 }
-```
+
