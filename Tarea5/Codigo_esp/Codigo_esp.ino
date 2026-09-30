@@ -1,4 +1,4 @@
-```cpp
+
 #include <Wire.h>
 
 // Pines utilizados para la comunicación I2C
@@ -46,4 +46,4 @@ void loop() {
   // No es necesario ejecutar nada aquí,
   // ya que la recepción de datos se gestiona con onReceive
 }
-```
+

@@ -1,4 +1,4 @@
-```cpp
+
 #include <Wire.h>
 
 void setup() {
@@ -35,4 +35,4 @@ void loop() {
   // Esperamos 1 segundo
   delay(1000);
 }
-```
+
