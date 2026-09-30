@@ -1,4 +1,4 @@
-```cpp
+
 #include "mbed.h"
 
 // Pin donde sacamos la señal PWM
@@ -57,4 +57,4 @@ void loop() {
   delay(10);
 
 }
-```
+
