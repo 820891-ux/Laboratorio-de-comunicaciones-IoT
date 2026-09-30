@@ -1,4 +1,4 @@
-```cpp
+
 // Variable donde se guarda el comando recibido por Serial
 String comando;
 
@@ -127,4 +127,4 @@ void loop() {
     leer = false;
   }
 }
-```
+
