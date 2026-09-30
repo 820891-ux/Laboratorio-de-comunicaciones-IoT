@@ -1,4 +1,4 @@
-```cpp
+
 #include <Arduino_LSM9DS1.h>
 
 // Variables para guardar los datos del acelerómetro
@@ -19,18 +19,16 @@ void setup() {
   // Iniciamos la comunicación serie
   Serial.begin(9600);
 
-  // Esperamos a que se abra el puerto serie
-  while (!Serial);
-
-  // Iniciamos la IMU
   if (!IMU.begin()) {
-
-    Serial.println("Error al iniciar la IMU");
-
-    // Si falla la inicialización, detenemos el programa
-    while (1);
+    Serial.println("ERROR: no se ha podido iniciar la IMU");
+    while (1) {
+      delay(1000);
+    }
   }
+
+  Serial.println("IMU iniciada correctamente");
 }
+
 
 void loop() {
 
@@ -115,4 +113,3 @@ void loop() {
     Serial.println();
   }
 }
-```
