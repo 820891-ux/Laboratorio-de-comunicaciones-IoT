@@ -1,141 +1,116 @@
-# Práctica 2 — Firmware con FreeRTOS en ESP32
+# Práctica 4 — Comunicaciones BLE y Bluetooth Classic
 
 **Asignatura:** Laboratorio de Comunicaciones IoT  
-**Titulación:** Máster en Ingeniería Electrónica — Universidad de Zaragoza
+**Máster en Ingeniería Electrónica**
 
 ## Descripción
 
-En esta práctica se trabaja con un **ESP32** y un **sensor inercial MPU6050**, conectado mediante **I²C**, para adquirir las tres componentes de la aceleración y enviarlas al ordenador por **UART**. Cada envío se indica mediante el encendido de un LED durante 200 ms.
+En esta práctica se implementan comunicaciones inalámbricas utilizando **Bluetooth Low Energy (BLE)** y **Bluetooth Classic**. Las tareas 1 a 4 se realizan con un **Arduino Nano 33 BLE Sense**, mientras que la tarea 5 utiliza un **ESP32 compatible con Bluetooth Classic**.
 
-Se incluyen dos implementaciones:
+Se trabaja con el *advertising* BLE, servicios y características **GATT**, lectura y notificaciones del acelerómetro, control remoto de la IMU y comunicación serie bidireccional mediante Bluetooth Classic.
 
-- **Tarea 2 (`Practica2Tarea2.ino`):** lectura y envío periódico mediante temporización con `millis()`.
-- **Tarea 3 (`Practica2Tarea3.ino`):** implementación mediante tareas de **FreeRTOS**, incorporando un *Idle Hook* como punto de partida para estudiar el bajo consumo.
+## Material y software
 
-## Objetivos
+- Arduino Nano 33 BLE Sense con IMU **LSM9DS1** (versión original de la placa).
+- ESP32 con soporte para **Bluetooth Classic** (por ejemplo, ESP32-WROOM-32; **no** ESP32-S3).
+- Ordenador con **Arduino IDE** y conexión USB a las placas.
+- Móvil Android con las aplicaciones **nRF Connect** y **Serial Bluetooth Terminal**.
+- Librerías de Arduino: `ArduinoBLE`, `Arduino_LSM9DS1` y `Wire`.
+- Para la tarea 5: `BluetoothSerial`, incluida en el paquete de placas ESP32 de Espressif.
 
-- Leer la aceleración en los ejes X, Y y Z del MPU6050 cada **100 ms**.
-- Enviar los valores por el puerto serie cada **1 s**.
-- Activar un LED durante **200 ms** al transmitir los datos.
-- Utilizar las tareas y los mecanismos de temporización de FreeRTOS.
-- Explorar el uso del *Idle Hook* para detectar los períodos en los que el sistema no tiene trabajo útil.
+> **Nota:** Los programas que utilizan `Arduino_LSM9DS1` y la dirección I2C `0x6B` están preparados para la versión del Nano 33 BLE Sense que incorpora el sensor LSM9DS1. La revisión Rev2 utiliza sensores diferentes.
 
-## Material necesario
+## Archivos
 
-- Placa de desarrollo **ESP32**.
-- Sensor **MPU6050**.
-- LED externo y resistencia limitadora de corriente adecuada.
-- Cables de conexión y cable USB.
-- Ordenador con **Arduino IDE**.
+| Archivo | Contenido | Placa |
+| --- | --- | --- |
+| [`Practica4tarea1.ino`](Practica4tarea1.ino) | Advertising e identificación del dispositivo BLE | Nano 33 BLE Sense |
+| [`Practica4tarea2.ino`](Practica4tarea2.ino) | Control del LED RGB desde una característica GATT | Nano 33 BLE Sense |
+| [`Practica4tarea3.ino`](Practica4tarea3.ino) | Lectura y notificaciones de los ejes del acelerómetro | Nano 33 BLE Sense |
+| [`Practica4tarea4.ino`](Practica4tarea4.ino) | Activación y desactivación remota del acelerómetro | Nano 33 BLE Sense |
+| [`Practica4tarea5.ino`](Practica4tarea5.ino) | Chat bidireccional mediante Bluetooth Classic | ESP32 |
 
-## Conexiones
+## Desarrollo de las tareas
 
-| ESP32 | Componente | Función |
-|---|---|---|
-| GPIO 21 | SDA del MPU6050 | Datos I²C |
-| GPIO 22 | SCL del MPU6050 | Reloj I²C |
-| GPIO 23 | LED externo (con resistencia) | Señalización del envío |
-| GND | GND del MPU6050 | Masa común |
-| 3V3 | Alimentación del módulo MPU6050, si es compatible | Alimentación |
+### Tarea 1. Advertising BLE
 
-El LED se conecta de forma que se encienda cuando GPIO 23 está a nivel alto. Comprueba la tensión admitida por tu módulo MPU6050 antes de alimentarlo.
+El Nano 33 BLE Sense se anuncia mediante BLE con el nombre de dispositivo **`820891`**. Se crea un servicio identificado mediante un UUID y se inicia el *advertising* para que el móvil pueda descubrirlo con nRF Connect.
 
-## Software y librerías
+**Comprobación:** buscar `820891` en nRF Connect y verificar que aparece el servicio anunciado.
 
-Los programas están desarrollados para el **framework Arduino sobre ESP32** y utilizan:
+> En este primer archivo, el UUID `416c756d-6e6f-0000-0000-000000000001` contiene la palabra **«Alumno»** codificada en hexadecimal; el identificador `820891` se utiliza como nombre visible del dispositivo.
 
-- `Wire.h`: comunicación I²C.
-- `Adafruit_MPU6050.h`: manejo del sensor MPU6050.
-- `Adafruit_Sensor.h`: estructuras de datos de los sensores.
-- `esp_freertos_hooks.h`: registro del *Idle Hook* (solo en la tarea 3).
+### Tarea 2. Control del LED RGB mediante GATT
 
-Instala desde el gestor de bibliotecas de Arduino IDE **Adafruit MPU6050** y **Adafruit Unified Sensor**, junto con sus dependencias. También es necesario tener instalado el soporte de placas **ESP32 de Espressif Systems**.
+Se añade una característica de tipo `BLEByteCharacteristic` con permisos **`BLERead | BLEWrite`**. El móvil escribe un byte para seleccionar el color del LED RGB integrado en la placa.
 
-## Archivos del proyecto
+| Valor decimal (`UINT8`) | Resultado |
+| --- | --- |
+| `0` | LED apagado |
+| `1` | Rojo |
+| `2` | Verde |
+| `3` | Azul |
+| `4` | Blanco |
 
-```text
-.
-├── Practica2Tarea2.ino
-├── Practica2Tarea3.ino
-└── README.md
-```
+Los LED RGB del Nano 33 BLE Sense son **activos a nivel bajo**, por lo que `LOW` los enciende y `HIGH` los apaga.
 
-### Tarea 2 — Temporización con `millis()`
+**Comprobación:** conectarse desde nRF Connect, escribir los valores en la característica terminada en `0002` y observar el cambio de color.
 
-Archivo: [`Practica2Tarea2.ino`](Practica2Tarea2.ino)
+### Tarea 3. Lectura del acelerómetro y notificaciones BLE
 
-El programa inicializa el MPU6050 y utiliza el tiempo transcurrido, obtenido con `millis()`, para realizar tres acciones sin utilizar `delay()`:
+Se utiliza la IMU **LSM9DS1** para leer las aceleraciones en los ejes **X, Y y Z** cada **100 ms**. Los valores, expresados en **g**, se convierten a una cadena de texto y se publican en una característica GATT con permisos **`BLERead | BLENotify`**, sin permiso de escritura.
 
-| Acción | Intervalo |
-|---|---|
-| Lectura de aceleración | Cada 100 ms |
-| Envío por UART | Cada 1.000 ms |
-| Apagado del LED tras cada envío | 200 ms después del encendido |
-
-Los últimos valores leídos de los ejes X, Y y Z se envían por el puerto serie. Esta implementación **no crea tareas FreeRTOS explícitas**; organiza las acciones mediante comprobaciones periódicas dentro de `loop()`.
-
-### Tarea 3 — Tareas FreeRTOS e *Idle Hook*
-
-Archivo: [`Practica2Tarea3.ino`](Practica2Tarea3.ino)
-
-En esta versión se crean dos tareas con `xTaskCreate()`:
-
-| Tarea | Función | Temporización | Prioridad |
-|---|---|---|---|
-| `tareaSensor` | Actualiza la aceleración X, Y y Z | `vTaskDelay()` de 100 ms | 1 |
-| `tareaUART` | Envía los datos y controla el LED | LED encendido 200 ms y espera adicional de 800 ms | 1 |
-
-Ambas tareas se crean con una profundidad de pila de **2048 bytes** según el argumento utilizado en `xTaskCreate()`.
-
-Además, se registra la función `funcionIdle()` mediante `esp_register_freertos_idle_hook()`. Esta función devuelve `true` sin realizar operaciones adicionales.
-
-**Importante:** el código registra un *Idle Hook*, pero **no implementa por sí mismo la entrada en un modo de bajo consumo** ni demuestra una reducción del consumo eléctrico. Para completar ese objetivo opcional sería necesario implementar y comprobar una estrategia de ahorro energético compatible con el ESP32 y las tareas activas.
-
-## Puesta en marcha
-
-1. Realiza las conexiones del MPU6050 y el LED.
-2. Instala el soporte ESP32 y las librerías indicadas.
-3. Abre el archivo `.ino` que quieras probar con Arduino IDE.
-4. Selecciona la placa ESP32 y el puerto serie correspondiente.
-5. Compila y carga el programa.
-6. Abre el **Monitor Serie a 9600 baudios**.
-7. Comprueba que aparecen las lecturas de aceleración aproximadamente cada segundo y que el LED se enciende durante 200 ms en cada envío.
-
-El mensaje de datos tiene este formato:
+Ejemplo de dato transmitido:
 
 ```text
-Accel X: <ax> Y: <ay> Z: <az>
+0.02,-0.04,1.01
 ```
 
-Los valores de aceleración proporcionados por la biblioteca Adafruit se expresan en **m/s²**.
+**Comprobación:** activar las notificaciones de la característica terminada en `0003` en nRF Connect. Los valores deben actualizarse automáticamente al mover la placa.
 
-Si el módulo no responde por I²C, el programa muestra `No se encuentra el MPU6050` y queda detenido.
+### Tarea 4. Control remoto del acelerómetro
 
-## Diferencias entre implementaciones
+Se incorpora una segunda característica de tipo `BLEByteCharacteristic` con permiso **`BLEWrite`**, identificada por el UUID terminado en `0004`.
 
-| Característica | Tarea 2 | Tarea 3 |
-|---|---|---|
-| Lectura del sensor | `millis()` en `loop()` | `tareaSensor` |
-| Envío serie y LED | `millis()` en `loop()` | `tareaUART` |
-| Temporización | Comparación de tiempos | `vTaskDelay()` |
-| Tareas FreeRTOS explícitas | No | Sí |
-| *Idle Hook* registrado | No | Sí |
-| Bajo consumo implementado y verificado | No | No |
+| Comando decimal (`UINT8`) | Acción |
+| --- | --- |
+| `0` | Desactiva el acelerómetro y detiene las actualizaciones |
+| `1` | Activa el acelerómetro y reanuda las actualizaciones |
 
-## Observaciones
+El estado del sensor se modifica a través de **I2C**, escribiendo en el registro `CTRL_REG6_XL` (`0x20`) del LSM9DS1, con dirección `0x6B` en `Wire1`. Así se evita ejecutar `IMU.end()` y `IMU.begin()` en cada cambio, manteniendo el bus I2C inicializado.
 
-- Se envía **la lectura de aceleración más reciente**, no el conjunto de las diez muestras adquiridas durante cada segundo.
-- En la tarea 3, las variables `ax`, `ay` y `az` son compartidas entre las dos tareas y no se utiliza un mecanismo explícito de sincronización. Para aplicaciones más exigentes podrían emplearse colas o mecanismos de protección de datos de FreeRTOS.
-- La tarea 3 realiza esperas de 200 ms y 800 ms; por tanto, el período real también incluye el tiempo de ejecución del envío y de las instrucciones.
-- La comprobación experimental del ahorro energético propuesta en el enunciado es **opcional** y no queda resuelta por el *Idle Hook* actual.
+**Comprobación:** activar las notificaciones de la característica `0003`, escribir `0` y después `1` en la característica `0004`, y verificar que se detienen y reanudan sin desconectar el móvil.
+
+### Tarea 5. Chat con Bluetooth Classic
+
+Se utiliza `BluetoothSerial` en el ESP32 para establecer una comunicación serie bidireccional mediante **Bluetooth Classic (SPP)**. El programa habilita el emparejamiento **SSP** e identifica el dispositivo como **`ESP32_820891`**.
+
+- Los caracteres escritos en el **monitor serie** del ordenador se envían al móvil.
+- Los caracteres recibidos desde el **móvil** se muestran en el monitor serie.
+
+**Comprobación:** emparejar el móvil con `ESP32_820891`, conectarse desde Serial Bluetooth Terminal y enviar mensajes en ambos sentidos.
+
+## Cómo ejecutar los programas
+
+1. Abrir el archivo `.ino` correspondiente en **Arduino IDE**.
+2. Seleccionar la **placa** y el **puerto USB** adecuados e instalar las librerías necesarias.
+3. Compilar y cargar el programa.
+4. Abrir el **monitor serie a 115200 baudios** para consultar los mensajes de depuración.
+5. Para las tareas **1–4**, conectarse desde **nRF Connect** al dispositivo `820891` y utilizar los servicios y características indicados.
+6. Para la tarea **5**, utilizar un ESP32 compatible con Bluetooth Classic y conectarse con **Serial Bluetooth Terminal** al dispositivo `ESP32_820891`.
+
+**Importante:** al cambiar el programa GATT entre las tareas 2, 3 y 4, si nRF Connect muestra características antiguas, es recomendable desconectarse y **redescubrir o actualizar los servicios**.
+
+## Hitos evaluables
+
+- **Tarea 1:** mostrar en nRF Connect el dispositivo anunciado con su nombre.
+- **Tarea 4:** comprobar la lectura y las notificaciones automáticas del acelerómetro, verificar que la característica de datos no admite escrituras y demostrar su activación/desactivación.
+- **Tarea 5:** enviar y recibir mensajes entre el móvil y el ESP32 mediante Bluetooth Classic.
 
 ## Referencias
 
-- [Documentación de FreeRTOS](https://www.freertos.org/Documentation/RTOS_book.html)
-- [Arduino ESP32 — Espressif](https://github.com/espressif/arduino-esp32)
-- [Librería Adafruit MPU6050](https://github.com/adafruit/Adafruit_MPU6050)
-- [Manual técnico del ESP32](https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf)
-
----
-
-*Práctica 2 de Laboratorio de Comunicaciones IoT: diseño de firmware basado en un sistema operativo de tiempo real (RTOS) con ESP32.*
+- [Documentación de ArduinoBLE](https://docs.arduino.cc/libraries/arduinoble/)
+- [Documentación de Arduino_LSM9DS1](https://docs.arduino.cc/libraries/arduino_lsm9ds1/)
+- [Ejemplos de BluetoothSerial para ESP32](https://github.com/espressif/arduino-esp32/tree/master/libraries/BluetoothSerial/examples)
+- [nRF Connect para Android](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp)
+- [Serial Bluetooth Terminal para Android](https://play.google.com/store/apps/details?id=de.kai_morich.serial_bluetooth_terminal)
