@@ -61,26 +61,35 @@ void loop() {
   BLE.poll();
 
   // Comprobamos si se recibe un comando
-  if (control.written()) {
-    byte valor = control.value();
+if (control.written()) {
+  byte valor = control.value();
 
-    if ((valor == 0 || valor == 1) &&
-        (valor == 1) != acelerometroActivo) {
+  // Si recibimos 1 y el acelerómetro está apagado
+  if (valor == 1 && !acelerometroActivo) {
 
-      bool activar = (valor == 1);
-
-      if (configurarAcelerometro(activar)) {
-        acelerometroActivo = activar;
-        ultimoEnvio = millis();
-
-        Serial.println(activar ?
-          "Acelerometro activado" :
-          "Acelerometro desactivado");
-      } else {
-        Serial.println("Error I2C");
-      }
+    if (configurarAcelerometro(true)) {
+      acelerometroActivo = true;
+      ultimoEnvio = millis();
+      Serial.println("Acelerometro activado");
+    } else {
+      Serial.println("Error I2C");
     }
+
   }
+
+  // Si recibimos 0 y el acelerómetro está encendido
+  else if (valor == 0 && acelerometroActivo) {
+
+    if (configurarAcelerometro(false)) {
+      acelerometroActivo = false;
+      ultimoEnvio = millis();
+      Serial.println("Acelerometro desactivado");
+    } else {
+      Serial.println("Error I2C");
+    }
+
+  }
+}
 
   // Enviamos los datos solo cuando está activado
   if (acelerometroActivo &&
